@@ -13,6 +13,9 @@ dotenv.config();
 
 export default defineConfig((config) => {
   return {
+    server: {
+      allowedHosts: ['build.appenza.app'],
+    },
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
