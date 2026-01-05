@@ -21,7 +21,7 @@ export function Header() {
           <img
             src="/appenza-logo.png"
             alt="Appenza"
-            className="w-[40px] inline-block"
+            className="h-8 w-auto inline-block"
           />
         </a>
       </div>

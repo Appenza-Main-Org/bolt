@@ -3,7 +3,8 @@
     "allow": [
       "Bash(git push:*)",
       "Bash(git tag:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git restore:*)"
     ]
   }
 }
