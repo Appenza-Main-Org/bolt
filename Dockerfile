@@ -36,8 +36,27 @@ FROM build AS prod-deps
 RUN pnpm prune --prod --ignore-scripts
 
 
-# ---- production stage ----
-FROM prod-deps AS bolt-ai-production
+# ---- development stage ----
+FROM build AS development
+
+# Non-sensitive development arguments
+ARG VITE_LOG_LEVEL=debug
+ARG DEFAULT_NUM_CTX
+
+# Set non-sensitive environment variables for development
+ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
+    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
+    RUNNING_IN_DOCKER=true
+
+# Note: API keys should be provided at runtime via docker run -e or docker-compose
+# Example: docker run -e OPENAI_API_KEY=your_key_here ...
+
+RUN mkdir -p /app/run
+CMD ["pnpm", "run", "dev", "--host"]
+
+
+# ---- production stage (DEFAULT) ----
+FROM prod-deps AS production
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -66,6 +85,7 @@ COPY --from=prod-deps /app/build /app/build
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=prod-deps /app/package.json /app/package.json
 COPY --from=prod-deps /app/bindings.sh /app/bindings.sh
+COPY --from=prod-deps /app/worker-configuration.d.ts /app/worker-configuration.d.ts
 
 # Pre-configure wrangler to disable metrics
 RUN mkdir -p /root/.config/.wrangler && \
@@ -82,22 +102,3 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
 
 # Start using dockerstart script with Wrangler
 CMD ["pnpm", "run", "dockerstart"]
-
-
-# ---- development stage ----
-FROM build AS development
-
-# Non-sensitive development arguments
-ARG VITE_LOG_LEVEL=debug
-ARG DEFAULT_NUM_CTX
-
-# Set non-sensitive environment variables for development
-ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
-    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
-    RUNNING_IN_DOCKER=true
-
-# Note: API keys should be provided at runtime via docker run -e or docker-compose
-# Example: docker run -e OPENAI_API_KEY=your_key_here ...
-
-RUN mkdir -p /app/run
-CMD ["pnpm", "run", "dev", "--host"]

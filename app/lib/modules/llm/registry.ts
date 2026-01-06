@@ -1,4 +1,3 @@
-import AnthropicProvider from './providers/anthropic';
 import CohereProvider from './providers/cohere';
 import DeepseekProvider from './providers/deepseek';
 import GoogleProvider from './providers/google';
@@ -19,18 +18,17 @@ import GithubProvider from './providers/github';
 import MoonshotProvider from './providers/moonshot';
 
 export {
-  AnthropicProvider,
-  CohereProvider,
-  DeepseekProvider,
+  OpenAIProvider,
   GoogleProvider,
   GroqProvider,
+  DeepseekProvider,
+  MistralProvider,
+  OpenRouterProvider,
+  CohereProvider,
   HuggingFaceProvider,
   HyperbolicProvider,
-  MistralProvider,
   MoonshotProvider,
   OllamaProvider,
-  OpenAIProvider,
-  OpenRouterProvider,
   OpenAILikeProvider,
   PerplexityProvider,
   XAIProvider,
