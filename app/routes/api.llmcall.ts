@@ -65,6 +65,8 @@ function validateTokenLimits(modelDetails: ModelInfo, requestedTokens: number): 
 }
 
 async function llmCallAction({ context, request }: ActionFunctionArgs) {
+  logger.info('=== LLM CALL START ===');
+
   const { system, message, model, provider, streamOutput } = await request.json<{
     system: string;
     message: string;
@@ -73,10 +75,13 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
     streamOutput?: boolean;
   }>();
 
+  logger.info(`Request: model=${model}, provider=${provider?.name}, stream=${streamOutput}`);
+
   const { name: providerName } = provider;
 
   // validate 'model' and 'provider' fields
   if (!model || typeof model !== 'string') {
+    logger.error('Invalid model');
     throw new Response('Invalid or missing model', {
       status: 400,
       statusText: 'Bad Request',
@@ -84,6 +89,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
   }
 
   if (!providerName || typeof providerName !== 'string') {
+    logger.error('Invalid provider');
     throw new Response('Invalid or missing provider', {
       status: 400,
       statusText: 'Bad Request',
@@ -93,6 +99,11 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
   const cookieHeader = request.headers.get('Cookie');
   const apiKeys = getApiKeysFromCookie(cookieHeader);
   const providerSettings = getProviderSettingsFromCookie(cookieHeader);
+
+  // Log environment keys
+  const serverEnv = context.cloudflare?.env as any;
+  logger.info(`Server env keys: ${serverEnv ? Object.keys(serverEnv).join(', ') : 'NONE'}`);
+  logger.info(`GROQ_API_KEY present: ${serverEnv?.GROQ_API_KEY ? 'YES' : 'NO'}`);
 
   if (streamOutput) {
     try {
