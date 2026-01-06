@@ -18,10 +18,10 @@ import GithubProvider from './providers/github';
 import MoonshotProvider from './providers/moonshot';
 
 export {
-  OpenAIProvider,
-  GoogleProvider,
   GroqProvider,
+  OpenAIProvider,
   DeepseekProvider,
+  GoogleProvider,
   MistralProvider,
   OpenRouterProvider,
   CohereProvider,
