@@ -89,6 +89,14 @@ export default class GroqProvider extends BaseProvider {
       defaultApiTokenKey: 'GROQ_API_KEY',
     });
 
+    // Debug: Log API key status (not the actual key)
+    console.log(`[Groq] API Key source check:`);
+    console.log(`  - From cookies (apiKeys): ${apiKeys?.['Groq'] ? 'YES' : 'NO'}`);
+    console.log(`  - From serverEnv: ${(serverEnv as any)?.GROQ_API_KEY ? 'YES' : 'NO'}`);
+    console.log(`  - Final apiKey present: ${apiKey ? 'YES' : 'NO'}`);
+    console.log(`  - API Key length: ${apiKey?.length || 0}`);
+    console.log(`  - API Key prefix: ${apiKey?.substring(0, 10)}...`);
+
     if (!apiKey) {
       throw new Error(`Missing API key for ${this.name} provider`);
     }
