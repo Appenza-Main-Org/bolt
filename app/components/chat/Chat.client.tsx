@@ -108,8 +108,34 @@ export const ChatImpl = memo(
     });
     const [provider, setProvider] = useState(() => {
       const savedProvider = Cookies.get('selectedProvider');
-      return (PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER) as ProviderInfo;
+      const foundProvider = PROVIDER_LIST.find((p) => p.name === savedProvider);
+
+      // If saved provider not found (e.g., Anthropic was removed), clear the cookies
+      if (savedProvider && !foundProvider) {
+        logger.warn(`Saved provider "${savedProvider}" no longer exists. Resetting to default.`);
+        Cookies.remove('selectedProvider');
+        Cookies.remove('selectedModel');
+      }
+
+      return (foundProvider || DEFAULT_PROVIDER) as ProviderInfo;
     });
+
+    // Validate saved model on mount - reset if it's from a removed provider
+    useEffect(() => {
+      const savedModel = Cookies.get('selectedModel');
+
+      // If the model looks like it's from a provider that doesn't exist (e.g., claude-* without Anthropic)
+      if (savedModel && savedModel.toLowerCase().includes('claude')) {
+        const hasAnthropic = PROVIDER_LIST.some((p) => p.name.toLowerCase() === 'anthropic');
+
+        if (!hasAnthropic) {
+          logger.warn(`Saved model "${savedModel}" requires Anthropic provider which is not available. Resetting to default.`);
+          setModel(DEFAULT_MODEL);
+          Cookies.set('selectedModel', DEFAULT_MODEL);
+        }
+      }
+    }, []);
+
     const { showChat } = useStore(chatStore);
     const [animationScope, animate] = useAnimate();
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});

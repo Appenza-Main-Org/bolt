@@ -166,7 +166,21 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       const modelDetails = models.find((m: ModelInfo) => m.name === model);
 
       if (!modelDetails) {
-        throw new Error('Model not found');
+        logger.error(`Model not found: ${model}. Available models: ${models.map((m) => m.name).slice(0, 10).join(', ')}...`);
+
+        return new Response(
+          JSON.stringify({
+            error: true,
+            message: `Model "${model}" not found. Please select a valid model from the settings.`,
+            statusCode: 400,
+            isRetryable: false,
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+            statusText: 'Model Not Found',
+          },
+        );
       }
 
       const dynamicMaxTokens = modelDetails ? getCompletionTokenLimit(modelDetails) : Math.min(MAX_TOKENS, 16384);
@@ -184,7 +198,21 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       const providerInfo = PROVIDER_LIST.find((p) => p.name === provider.name);
 
       if (!providerInfo) {
-        throw new Error('Provider not found');
+        logger.error(`Provider not found: ${provider.name}. Available providers: ${PROVIDER_LIST.map((p) => p.name).join(', ')}`);
+
+        return new Response(
+          JSON.stringify({
+            error: true,
+            message: `Provider "${provider.name}" not found. Please select a valid provider from the settings.`,
+            statusCode: 400,
+            isRetryable: false,
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+            statusText: 'Provider Not Found',
+          },
+        );
       }
 
       logger.info(`Generating response Provider: ${provider.name}, Model: ${modelDetails.name}`);
