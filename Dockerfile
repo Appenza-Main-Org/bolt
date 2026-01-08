@@ -36,7 +36,37 @@ FROM build AS prod-deps
 RUN pnpm prune --prod --ignore-scripts
 
 
-# ---- production stage ----
+# ---- development stage ----
+FROM build AS development
+WORKDIR /app
+
+# Non-sensitive development arguments
+ARG VITE_LOG_LEVEL=debug
+ARG DEFAULT_NUM_CTX
+
+ENV PORT=5173
+ENV HOST=0.0.0.0
+
+# Set non-sensitive environment variables for development
+ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
+    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
+    RUNNING_IN_DOCKER=true
+
+# Install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /app/run
+
+EXPOSE 5173
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
+  CMD curl -fsS http://localhost:5173/ || exit 1
+
+CMD ["pnpm", "run", "dev", "--host"]
+
+
+# ---- production stage (DEFAULT) ----
 FROM prod-deps AS production
 WORKDIR /app
 
@@ -54,10 +84,7 @@ ENV WRANGLER_SEND_METRICS=false \
     DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
     RUNNING_IN_DOCKER=true
 
-# Note: API keys should be provided at runtime via docker run -e or docker-compose
-# Example: docker run -e OPENAI_API_KEY=your_key_here ...
-
-# Install curl for healthchecks and copy bindings script
+# Install curl for healthchecks
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
   && rm -rf /var/lib/apt/lists/*
 
@@ -83,38 +110,3 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
 
 # Start using dockerstart script with Wrangler
 CMD ["pnpm", "run", "dockerstart"]
-
-
-# ---- development stage (DEFAULT) ----
-FROM build AS development
-WORKDIR /app
-
-# Non-sensitive development arguments
-ARG VITE_LOG_LEVEL=debug
-ARG DEFAULT_NUM_CTX
-
-ENV PORT=5173
-ENV HOST=0.0.0.0
-
-# Set non-sensitive environment variables for development
-ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
-    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
-    RUNNING_IN_DOCKER=true
-
-# Note: API keys should be provided at runtime via docker run -e or docker-compose
-# Example: docker run -e OPENAI_API_KEY=your_key_here ...
-
-# Install curl for healthchecks
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-  && rm -rf /var/lib/apt/lists/*
-
-RUN mkdir -p /app/run
-
-EXPOSE 5173
-
-# Healthcheck for deployment platforms
-HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
-  CMD curl -fsS http://localhost:5173/ || exit 1
-
-# Start dev server
-CMD ["pnpm", "run", "dev", "--host"]
